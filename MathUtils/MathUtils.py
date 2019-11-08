@@ -1,3 +1,7 @@
+import decimal as decimal_
+import math
+
+
 class Odds:
     def __init__(self, probability):
         self.decimal = self.american = self.fractional = 0
@@ -47,6 +51,24 @@ class MoneyLine:
         return Odds(probability * 100)
 
 
+class Fraction:
+    def __init__(self, numerator, denominator):
+        self.numerator = numerator
+        self.denominator = denominator
+
+    def reduce(self):
+        div = math.gcd(int(self.numerator), int(self.denominator))
+        while div > 1:
+            self.numerator /= div
+            self.denominator /= div
+            div = math.gcd(int(self.numerator),int(self.denominator))
+
+
+    def getDecimal(self):
+        return self.numerator / self.denominator
+
+
+
 def line_to_probability(line):
     if line < 0:
         probability = line.__abs__() / (100 + line.__abs__())
@@ -65,8 +87,29 @@ def fraction_to_probability(numerator, denominator):
     return denominator / (numerator + denominator)  # probability of fractional x / y is (y / (x+y))*100
 
 
+def probability_to_fractional(probability):
+    f = decimal_to_fraction(probability/100)
+    f.reduce()
+    return Fractional(f.denominator - f.numerator, f.numerator)
+
+    # return denominator / (numerator + denominator)  # probability of fractional x / y is (y / (x+y))*100
+
+
+def decimal_to_fraction(decimal):
+    dec = decimal_.Decimal(decimal.__str__())
+    power = dec.as_tuple().exponent.__abs__()
+    denom = math.pow(10, power)
+    return Fraction(decimal * denom, denom)
+
+
 def main():
-    pass
+    frac = decimal_to_fraction(0.5)
+    # print(frac.numerator)
+    # print(frac.denominator)
+    frac.reduce()
+    # print(frac.numerator)
+    # print(frac.denominator)
+    print(probability_to_fractional(0.5).get_odds().probability)
 
 
 if __name__ == '__main__':
