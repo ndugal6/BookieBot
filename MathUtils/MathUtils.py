@@ -6,14 +6,14 @@ import math
 
 class Odds(object):
     def __init__(self, probability):
-        self.decimal = self.american = self.fractional = 0
+        self.decimal = self.moneyline = self.fractional = 0
         self.probability = probability
         self.percentage = probability * 100
 
     def compute_values(self):
         pass
         self.decimal = probability_to_decimal(self.probability)
-        # self.american = self.__data[-1]
+        self.moneyline = probability_to_moneyline(self.probability)
         self.fractional = probability_to_fractional(self.probability)
 
     @property
@@ -105,6 +105,13 @@ def decimal_to_fraction(decimal):
     power = dec.as_tuple().exponent.__abs__()
     denom = math.pow(10, power)
     return Fraction(decimal * denom, denom)
+
+# Kelly is method of determining the amount of your bank account to hedge of a bet. Reduces risk
+def kelly_criterion(projectedOdds: Odds, actualOdds: Odds):
+    numerator = projectedOdds.probability * actualOdds.decimal
+    numerator -= 1
+    denominator = actualOdds.decimal - 1
+    stake = numerator / denominator  # factor to multiply by value in bank account for a given bet
 
 
 def main():
