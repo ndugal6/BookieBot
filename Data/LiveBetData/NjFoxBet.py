@@ -1,18 +1,20 @@
-"""Example of Python client calling Knowledge Graph Search API."""
+"""Example of Python client calling Fox Bet Sports World."""
+# https://nj.foxbet.com/#/basketball/competitions/4700094
 import json
 import urllib.parse
 import requests
+host = 'http://sports.nj.foxbet.com'
+basePath = '/sportsbook/v1/api'
 
 def getNJFOX_Lines():
-    host = 'http://sports.nj.foxbet.com'
-    path = '/sportsbook/v1/api/getCompetitionEvents'
+    path = '/getCompetitionEvents'
     params = {
         'competitionId': get_nba_id(),  # id of comp from other api call
         'includeOutrights': 'false',  # unknown meaning
         'channelId': 14,  # unknown meaning
         'locale': 'en-us'
     }
-    url = host + path + '?' + urllib.parse.urlencode(params)
+    url = host + basePath + path + '?' + urllib.parse.urlencode(params)
     response = requests.get(url)
     print(response.status_code)
     return response
@@ -37,16 +39,28 @@ def get_nba_id():
 
 
 def get_sports_tree():
-    path = '/sportsbook/v1/api/getSportTree'
-    host = 'http://sports.nj.foxbet.com'
+    path = '/getSportTree'
     params = {
-        'sport': 'BASKETBALL',  # id of comp from other api call
-        'includeOutrights': 'false',  # unknown meaning
-        'includeEvents': 'false',  # unknown meaning
+        'sport': 'BASKETBALL',
+        'includeOutrights': False,  # unknown meaning
+        'includeEvents': False,  # unknown meaning
         'channelId': 14,  # unknown meaning
         'locale': 'en-us'
     }
-    url = host + path + '?' + urllib.parse.urlencode(params)
+    url = host + basePath + path + '?' + urllib.parse.urlencode(params)
+    response = requests.get(url)
+    print(response.status_code)
+    return response
+
+
+def get_event_details(event_id = 8346742):
+    path = '/getEvent'
+    params = {
+        'eventId': event_id,
+        'channelId': 14,  # unknown meaning
+        'locale': 'en-us'
+    }
+    url = host + basePath + path + '?' + urllib.parse.urlencode(params)
     response = requests.get(url)
     print(response.status_code)
     return response
@@ -56,6 +70,10 @@ def get_sports_tree():
 def main():
     print(get_nba_id())
     print(getEventNames())
+    print(get_event_details().json()['name'])
 
 if __name__ == '__main__':
     main()
+
+
+# A MAPPING OF SPORTSTREE
