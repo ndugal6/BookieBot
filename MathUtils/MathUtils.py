@@ -1,10 +1,13 @@
 import decimal as decimal_
 import math
+
+
 # For clarification: probability is bounded by 0 & 1
 #                     percentage is probability * 100; bound by 0 & 100...
 #  If you see somewhere other than here that x has a probability of 40, then translate to .4 for use in this program
 
 class Odds(object):
+    """Odds class - maintains probabilities & conversions to types of odds used in betting"""
     def __init__(self, probability):
         self.decimal = self.moneyline = self.fractional = 0
         self.probability = probability
@@ -26,9 +29,8 @@ class Odds(object):
         self.compute_values()
 
 
-
-
 class Decimal(object):
+    """Decimal Betting Class"""
     def __init__(self, decimal):
         self.decimal = decimal
 
@@ -38,6 +40,7 @@ class Decimal(object):
 
 
 class MoneyLine(object):
+    """Moneyline Bet class"""
     def __init__(self, line):
         self.line = line
 
@@ -46,7 +49,8 @@ class MoneyLine(object):
         return Odds(probability)
 
 
-class Fraction(object):  # literal mathematical fraction representation, NOT the Fractional bet format
+class Fraction(object):
+    """literal mathematical fraction representation, NOT the Fractional bet format"""
     def __init__(self, numerator, denominator):
         self.numerator = numerator
         self.denominator = denominator
@@ -56,10 +60,11 @@ class Fraction(object):  # literal mathematical fraction representation, NOT the
         while div > 1:
             self.numerator /= div
             self.denominator /= div
-            div = math.gcd(int(self.numerator),int(self.denominator))
+            div = math.gcd(int(self.numerator), int(self.denominator))
 
 
 class Fractional(Fraction):
+    """Fractional Odds Class"""
     def get_odds(self):
         probability = fraction_to_probability(self)
         return Odds(probability)
@@ -78,7 +83,8 @@ def decimal_to_probability(decimal):
 
 
 def fraction_to_probability(fraction):
-    return fraction.denominator / (fraction.numerator + fraction.denominator)  # probability of fractional x / y is (y / (x+y))
+    return fraction.denominator / (
+                fraction.numerator + fraction.denominator)  # probability of fractional x / y is (y / (x+y))
 
 
 def probability_to_moneyline(probability):
@@ -106,11 +112,12 @@ def decimal_to_fraction(decimal):
     denom = math.pow(10, power)
     return Fraction(decimal * denom, denom)
 
-# Kelly is method of determining the amount of your bank account to hedge of a bet. Reduces risk
-def kelly_criterion(projectedOdds: Odds, actualOdds: Odds):
-    numerator = projectedOdds.probability * actualOdds.decimal
+
+def kelly_criterion(projected_odds: Odds, actual_odds: Odds):
+    """Kelly is method of determining the amount of your bank account to hedge of a bet. Reduces risk"""
+    numerator = projected_odds.probability * actual_odds.decimal
     numerator -= 1
-    denominator = actualOdds.decimal - 1
+    denominator = actual_odds.decimal - 1
     stake = numerator / denominator  # factor to multiply by value in bank account for a given bet
 
 
@@ -131,12 +138,13 @@ def main():
     # print(frac.denominator)
     # print(probability_to_fractional(0.5).get_odds().probability)
 
+
 def linesToprobs(lines):
     probs = []
     for line in lines:
         probs.append((line, line_to_probability(line)))
-        # probs.append((line, str(line_to_probability(line) * 100) + '%'))
     return probs
+
 
 if __name__ == '__main__':
     main()

@@ -1,6 +1,6 @@
 """Example of Python client calling Fox Bet Sports World."""
 # https://nj.foxbet.com/#/basketball/competitions/4700094
-import json
+
 import urllib.parse
 import requests
 host = 'http://sports.nj.foxbet.com'
