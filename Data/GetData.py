@@ -40,6 +40,7 @@ def scratchWork():
 
 def runDisMotherFucker():
     # steph = pd.read_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/CareerStats/steph_curry.csv', index_col='SEASON_ID')
+    steph = pd.read_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/CareerStats/steph_curry.csv')
     # lebron = pd.read_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/CareerStats/lebron_james.csv', index_col='SEASON_ID')
     # createAverage(steph)
     # createAverage(lebron)
@@ -48,8 +49,8 @@ def runDisMotherFucker():
     # data_i_want['REBOUND_AVG'].plot()
     # data_i_want['STEAL_AVG'].plot()
     # data_i_want['ASSIST_AVG'].plot()
-    plt.legend()
-    plt.show()
+    # plt.legend()
+    # plt.show()
 
 
 def createAverage(data_frame):
@@ -64,7 +65,12 @@ def createAverage(data_frame):
 
 if __name__ == '__main__':
     # runDisMotherFucker()
-    steph_curry_career_stats = endpoints.playercareerstats.PlayerCareerStats(player_id=201939).get_data_frames()
-    stats_I_maybe = steph_curry_career_stats[0]
-    # stephs = players.find_players_by_first_name('Stephen')
+    steph = pd.read_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/CareerStats/steph_curry.csv', index_col='SEASON_ID')
+    steph2 = steph.T
+    years = list(map(lambda x: (x.split('-')[0]), steph2.columns))
+    steph2.columns = years
+    steph3 = steph2.T
     # scratchWork()
+
+def getYear(year):
+    return year.split('-')[0]
