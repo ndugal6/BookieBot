@@ -1,5 +1,6 @@
 import pandas as pd
 
+# this glorious api has documentation here https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/examples.md
 from nba_api.stats.static import teams
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
@@ -29,6 +30,8 @@ def main_player_data():
 def make_average(_df: pd.DataFrame):
     _df['STL_AVG'] = _df.apply(lambda x: x['STL'] / x['GP'], axis=1)
     _df['PTS_AVG'] = _df.apply(lambda x: x['PTS'] / x['GP'], axis=1)
+    _df['REB_AVG'] = _df.apply(lambda x: x['REB'] / x['GP'], axis=1)
+    _df['AST_AVG'] = _df.apply(lambda x: x['AST'] / x['GP'], axis=1)
     # _df['SEASON_ID'] = _df['SEASON_ID'].map(lambda x: int(x.split('-')[0]))
 
 
