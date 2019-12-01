@@ -7,7 +7,6 @@ from nba_api.stats.endpoints import playercareerstats
 from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.endpoints import commonplayerinfo
 
-
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -23,28 +22,30 @@ class NoPlayersFound(Exception): pass
 DATA_FOLDER = Path(".").resolve()
 
 
-def main_player_data():
+def main_player_data() -> pd.DataFrame:
     ad_data = get_playercareerstats('203076')
     sc_data = get_playercareerstats('201939')
     return [ad_data, sc_data]
 
 
-def make_average(_df: pd.DataFrame):
+def make_average(_df: pd.DataFrame) -> None:
     _df['STL_AVG'] = _df.apply(lambda x: x['STL'] / x['GP'], axis=1)
     _df['PTS_AVG'] = _df.apply(lambda x: x['PTS'] / x['GP'], axis=1)
     _df['REB_AVG'] = _df.apply(lambda x: x['REB'] / x['GP'], axis=1)
     _df['AST_AVG'] = _df.apply(lambda x: x['AST'] / x['GP'], axis=1)
     # _df['SEASON_ID'] = _df['SEASON_ID'].map(lambda x: int(x.split('-')[0]))
 
-def average_per_min(df: pd.DataFrame):
-    average_list = ['STL','PTS','REB','AST', 'BLK','FGM','FGA','FG3A','FG3_PCT','OREB','DREB','TOV', 'FTM', 'FTA', 'FG3M']
+
+def average_per_min(df: pd.DataFrame) -> None:
+    average_list = ['STL', 'PTS', 'REB', 'AST', 'BLK', 'FGM', 'FGA', 'FG3A', 'FG3_PCT', 'OREB', 'DREB', 'TOV', 'FTM',
+                    'FTA', 'FG3M']
     for average in average_list:
         col_name = average + '_AVG'
         df[col_name] = df.apply(lambda x: x[average] / x['MIN'], axis=1)
         df.drop(average, inplace=True, axis=1)
 
 
-def make_multi_index(name: str, _df: pd.DataFrame):
+def make_multi_index(name: str, _df: pd.DataFrame) -> pd.DataFrame:
     _df.set_index('SEASON_ID', inplace=True)
     index_list = _df.T.index.to_list()
     index_a = [name] * len(index_list)
@@ -53,16 +54,16 @@ def make_multi_index(name: str, _df: pd.DataFrame):
     return _df.T.set_index(new_index)
 
 
-def combine_and_clean(_df1: pd.DataFrame, _df2: pd.DataFrame):
+def combine_and_clean(_df1: pd.DataFrame, _df2: pd.DataFrame) -> pd.DataFrame:
     combo = pd.concat([_df1, _df2], axis=0).fillna(0)
     return combo
 
 
-def get_playercareerstats(player_id: str or int):
+def get_playercareerstats(player_id: str or int) -> pd.DataFrame:
     return playercareerstats.PlayerCareerStats(player_id=player_id).get_data_frames()[0]
 
 
-def get_all_years_data_for_player(player: pd.DataFrame):
+def get_all_years_data_for_player(player: pd.DataFrame) -> pd.DataFrame:
     years = player['SEASON_ID'].to_list()
     playerid = player['PLAYER_ID'][0]
     data = playergamelog.PlayerGameLog(player_id=playerid, season=years.pop()).get_data_frames()[0]
@@ -74,42 +75,42 @@ def get_all_years_data_for_player(player: pd.DataFrame):
     return data
 
 
-def create_save_all_years_data_for_player(player_id: int):
+def create_save_all_years_data_for_player(player_id: int) -> None:
     player_data = get_playercareerstats(player_id)
     all_player_data = get_all_years_data_for_player(player_data)
     file_path = DATA_FOLDER / 'DetailedPlayerStats' / (str(player_id) + '_all_years.csv')
     all_player_data.to_csv(file_path)
 
 
-def get_playerid_from_name(name: str):
+def get_playerid_from_name(name: str) -> int:
     names = players.find_players_by_full_name(name)
     id = player_id_from_list(names)
     if id is None:
         if name.__contains__(' '):
-            regex_name = name.replace(' ','.*')
+            regex_name = name.replace(' ', '.*')
             return get_playerid_from_name(regex_name)
         else:
             raise NoPlayersFound(f'name provided {name}')
     return id
 
 
-def player_id_from_list(players: list):
+def player_id_from_list(players: list) -> int:
     players = list(filter(lambda x: x['is_active'], players))
     if len(players) == 0: return None
     if len(players) > 1: raise TooManyPlayers
     return players[0]['id']
 
-def current_season_for_all_players_averaged():
+
+def current_season_for_all_players_averaged() -> pd.DataFrame:
     stats = pd.DataFrame();
     for player in players.get_active_players():
         career_stats = playercareerstats.PlayerCareerStats(player['id']).get_data_frames()[0]
         year_stats = career_stats.loc[career_stats['SEASON_ID'] == '2019-20']
-        stats = pd.concat([stats, year_stats], axis=0,)
+        stats = pd.concat([stats, year_stats], axis=0, )
         # curry_season_stats
     file_path = DATA_FOLDER / 'CareerStats/all_players_this_year.csv'
-    stats.to_csv(file_path)
+    stats.to_csv(file_path, index=False)
     return stats
-
 
 
 def main():
@@ -128,7 +129,8 @@ if __name__ == '__main__':
     # average_per_min(curry_game_stats)
     # all_stats = current_season_for_all_players_averaged()
     all_stats = pd.read_csv(DATA_FOLDER / 'CareerStats/all_players_this_year.csv')
-    all_stats['name'] = all_stats.apply(lambda x: commonplayerinfo.CommonPlayerInfo(x['PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST'], axis=1)
+    all_stats['name'] = all_stats.apply(
+        lambda x: commonplayerinfo.CommonPlayerInfo(x['PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST'], axis=1)
     all_stats.to_csv(DATA_FOLDER / 'CareerStats/all_players_this_year_named.csv')
     # main()
 

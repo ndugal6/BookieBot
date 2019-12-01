@@ -1,5 +1,5 @@
 import unittest
-from MathUtils.MathUtils import *
+from source.MathUtils.MathUtils import *
 
 test1 = Fractional(5, 2)
 test2 = Decimal(3.5)
