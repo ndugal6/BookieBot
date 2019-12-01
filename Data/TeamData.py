@@ -18,6 +18,7 @@ class NoTeamsFound(Exception): pass
 
 DATA_FOLDER = Path(".").resolve()
 
+all_teams = teams.get_teams()
 
 def get_team_meta_data(identifier: str):
     meta_data = teams.find_team_name_by_id(identifier)
@@ -61,14 +62,29 @@ def get_all_years_data_for_team(team: object):
     df.sort_values(by="GAME_DATE", inplace=True)
     return df
 
+def add_opponent_data(df: pd.DataFrame):
+    df['HOME'] = df.apply(lambda x: 0 if '@' in x['MATCHUP'] else 1, axis=1)
+    df['OPP'] = df.apply(lambda x: x['MATCHUP'].split(' ')[-1], axis=1)
+    df['OPP_ID'] = df.apply(lambda x: team_id_from_abbrev(x['OPP']), axis=1)
+    df.astype({'OPP_ID': 'int64'})
+
+def team_id_from_abbrev(abbrev: str):
+    matched_team = list(filter(lambda x: x['abbreviation'] == abbrev, all_teams))
+    return 0 if len(matched_team) != 1 else matched_team[0]['id']
 
 
 def create_save_all_years_data_for_team(team: object):
     all_years = get_all_years_data_for_team(team)
+    add_opponent_data(all_years)
     file_path = DATA_FOLDER / 'DetailedTeamStats' / (team['nickname'] + '_all_years.csv')
     all_years.to_csv(file_path)
 
 
 if __name__ == '__main__':
-    pelicans_data = get_team_meta_data('pelicans')
-    create_save_all_years_data_for_team(pelicans_data)
+
+    # pelicans_data = get_team_meta_data('pelicans')
+    # create_save_all_years_data_for_team(pelicans_data)
+    pelicans_data = pd.read_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/DetailedTeamStats/Pelicans_all_years.csv', index_col=0)
+    pelicans_data.reset_index(drop=True, inplace=True)
+    add_opponent_data(pelicans_data)
+    pelicans_data.to_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/DetailedTeamStats/Pelicans_all_years_opponent_data.csv')

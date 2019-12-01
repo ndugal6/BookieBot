@@ -5,6 +5,8 @@ from nba_api.stats.static import teams
 from nba_api.stats.static import players
 from nba_api.stats.endpoints import playercareerstats
 from nba_api.stats.endpoints import playergamelog
+from nba_api.stats.endpoints import commonplayerinfo
+
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -33,6 +35,13 @@ def make_average(_df: pd.DataFrame):
     _df['REB_AVG'] = _df.apply(lambda x: x['REB'] / x['GP'], axis=1)
     _df['AST_AVG'] = _df.apply(lambda x: x['AST'] / x['GP'], axis=1)
     # _df['SEASON_ID'] = _df['SEASON_ID'].map(lambda x: int(x.split('-')[0]))
+
+def average_per_min(df: pd.DataFrame):
+    average_list = ['STL','PTS','REB','AST', 'BLK','FGM','FGA','FG3A','FG3_PCT','OREB','DREB','TOV', 'FTM', 'FTA', 'FG3M']
+    for average in average_list:
+        col_name = average + '_AVG'
+        df[col_name] = df.apply(lambda x: x[average] / x['MIN'], axis=1)
+        df.drop(average, inplace=True, axis=1)
 
 
 def make_multi_index(name: str, _df: pd.DataFrame):
@@ -90,6 +99,18 @@ def player_id_from_list(players: list):
     if len(players) > 1: raise TooManyPlayers
     return players[0]['id']
 
+def current_season_for_all_players_averaged():
+    stats = pd.DataFrame();
+    for player in players.get_active_players():
+        career_stats = playercareerstats.PlayerCareerStats(player['id']).get_data_frames()[0]
+        year_stats = career_stats.loc[career_stats['SEASON_ID'] == '2019-20']
+        stats = pd.concat([stats, year_stats], axis=0,)
+        # curry_season_stats
+    file_path = DATA_FOLDER / 'CareerStats/all_players_this_year.csv'
+    stats.to_csv(file_path)
+    return stats
+
+
 
 def main():
     data = main_player_data()
@@ -101,8 +122,14 @@ def main():
 
 if __name__ == '__main__':
     # pass
-    id = get_playerid_from_name('steph curry')
-    create_save_all_years_data_for_player(id)
+    # id = get_playerid_from_name('steph curry')
+    # create_save_all_years_data_for_player(id)
+    # curry_game_stats = playergamelog.PlayerGameLog(player_id=201939, season='2018').get_data_frames()[0]
+    # average_per_min(curry_game_stats)
+    # all_stats = current_season_for_all_players_averaged()
+    all_stats = pd.read_csv(DATA_FOLDER / 'CareerStats/all_players_this_year.csv')
+    all_stats['name'] = all_stats.apply(lambda x: commonplayerinfo.CommonPlayerInfo(x['PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST'], axis=1)
+    all_stats.to_csv(DATA_FOLDER / 'CareerStats/all_players_this_year_named.csv')
     # main()
 
     # sc_678.plot(x = 'id', y = ['AST'], kind='scatter', color='red', ax=ax)
