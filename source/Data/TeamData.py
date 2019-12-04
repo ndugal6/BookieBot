@@ -8,6 +8,7 @@ from nba_api.stats.endpoints import \
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from nba_api.stats.endpoints import leaguegamefinder
 
 from pathlib import Path
 
@@ -74,6 +75,12 @@ def get_all_years_data_for_team(team: object) -> pd.DataFrame:
     df.sort_values(by="GAME_DATE", inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df
+
+def get_all_years_data_for_team_id(team_id: int or str) -> pd.DataFrame:
+    gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id)
+    # The first DataFrame of those returned is what we want.
+    games = gamefinder.get_data_frames()[0]
+    return games
 
 
 def add_opponent_data(df: pd.DataFrame):
