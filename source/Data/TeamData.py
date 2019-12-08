@@ -65,7 +65,7 @@ def get_all_years_data_for_team(team: object) -> pd.DataFrame:
     for year in range(team['year_founded'], 2020):
         yearly_data = get_team_game_stats_by_year(team, year)
         df = pd.concat([df, yearly_data], axis=0)
-    df['GAME_DATE'] = pd.to_datetime(df['GAME_DATE'])
+    df['GAME_DATE'] = pd.to_datetime(df.loc[:,'GAME_DATE'])
     df.sort_values(by="GAME_DATE", inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df
@@ -79,9 +79,9 @@ def get_all_years_data_for_team_id(team_id: int or str) -> pd.DataFrame:
 
 
 def add_opponent_data(df: pd.DataFrame):
-    df['HOME'] = df.apply(lambda x: 0 if '@' in x['MATCHUP'] else 1, axis=1)
-    df['OPP'] = df.apply(lambda x: x['MATCHUP'].split(' ')[-1], axis=1)
-    df['OPP_ID'] = df.apply(lambda x: team_id_from_abbrev(x['OPP']), axis=1)
+    df['HOME'] = df.apply(lambda x: 0 if '@' in x.loc['MATCHUP'] else 1, axis=1)
+    df['OPP'] = df.apply(lambda x: x.loc['MATCHUP'].split(' ')[-1], axis=1)
+    df['OPP_ID'] = df.apply(lambda x: team_id_from_abbrev(x.loc['OPP']), axis=1)
     df.astype({'OPP_ID': 'int64'})
 
 
@@ -132,8 +132,8 @@ def scratch_work():
     pels = get_team_meta_data('pelicans')
     gsw = get_team_meta_data('GSW')
     matchups = teams_matchup_data(pels, gsw)
-    home = matchups.loc[matchups['HOME'] == 1]
-    away = matchups.loc[matchups['HOME'] == 0]
-    wins = len(matchups.loc[matchups['WL'] == 'W']['WL'])
-    losses = len(matchups.loc[matchups['WL'] == 'L']['WL'])
+    home = matchups.loc[matchups.loc[:, 'HOME'] == 1]
+    away = matchups.loc[matchups.loc[:, 'HOME'] == 0]
+    wins = len(matchups.loc[matchups.loc[:,'WL'] == 'W']['WL'])
+    losses = len(matchups.loc[matchups.loc[:,'WL'] == 'L']['WL'])
     win_percent = wins / (wins / losses)

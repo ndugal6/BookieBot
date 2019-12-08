@@ -28,10 +28,10 @@ def main_player_data() -> pd.DataFrame:
 
 
 def make_average(_df: pd.DataFrame) -> None:
-    _df['STL_AVG'] = _df.apply(lambda x: x['STL'] / x['GP'], axis=1)
-    _df['PTS_AVG'] = _df.apply(lambda x: x['PTS'] / x['GP'], axis=1)
-    _df['REB_AVG'] = _df.apply(lambda x: x['REB'] / x['GP'], axis=1)
-    _df['AST_AVG'] = _df.apply(lambda x: x['AST'] / x['GP'], axis=1)
+    _df['STL_AVG'] = _df.apply(lambda x: x.loc['STL'] / x.loc['GP'], axis=1)
+    _df['PTS_AVG'] = _df.apply(lambda x: x.loc['PTS'] / x.loc['GP'], axis=1)
+    _df['REB_AVG'] = _df.apply(lambda x: x.loc['REB'] / x.loc['GP'], axis=1)
+    _df['AST_AVG'] = _df.apply(lambda x: x.loc['AST'] / x.loc['GP'], axis=1)
 
 
 def average_per_min(df: pd.DataFrame) -> None:
@@ -39,7 +39,7 @@ def average_per_min(df: pd.DataFrame) -> None:
                     'FTA', 'FG3M']
     for average in average_list:
         col_name = average + '_AVG'
-        df[col_name] = df.apply(lambda x: x[average] / x['MIN'], axis=1)
+        df[col_name] = df.apply(lambda x: x.loc[average] / x.loc['MIN'], axis=1)
         df.drop(average, inplace=True, axis=1)
 
 
@@ -64,14 +64,14 @@ def get_playercareerstats(player_id=201939) -> pd.DataFrame:
 
 
 def get_all_years_data_for_player(player: pd.DataFrame) -> pd.DataFrame:
-    player_id = player['PERSON_ID'][0]
+    player_id = player.loc[:,'PERSON_ID'][0]
     data = pd.DataFrame()
     for year in range(player.FROM_YEAR[0], player.TO_YEAR[0] + 1):
         year = str(year)
         season = year + '-' + str(int(year[-2:]) + 1)
         data = pd.concat([data, playergamelog.PlayerGameLog(player_id=player_id, season=season).get_data_frames()[0]],
                          axis=0).fillna(0)
-    data['GAME_DATE'] = pd.to_datetime(data['GAME_DATE'])
+    data['GAME_DATE'] = pd.to_datetime(data.loc[:,'GAME_DATE'])
     data['NAME'] = player.DISPLAY_FIRST_LAST[0]
     data.sort_values(by="GAME_DATE", inplace=True)
     normalize(data)
@@ -110,7 +110,7 @@ def current_season_for_all_players_averaged() -> pd.DataFrame:
     stats = pd.DataFrame();
     for player in players.get_active_players():
         career_stats = playercareerstats.PlayerCareerStats(player['id']).get_data_frames()[0]
-        year_stats = career_stats.loc[career_stats['SEASON_ID'] == '2019-20']
+        year_stats = career_stats.loc[career_stats.loc[:,'SEASON_ID'] == '2019-20']
         stats = pd.concat([stats, year_stats], axis=0, )
     file_path = DATA_FOLDER / 'CareerStats/all_players_this_year.csv'
     stats.to_csv(file_path, index=False)
@@ -118,7 +118,7 @@ def current_season_for_all_players_averaged() -> pd.DataFrame:
 
 
 def add_player_name(data: pd.DataFrame):
-    name = commonplayerinfo.CommonPlayerInfo(data['PLAYER_ID'][0]).get_data_frames()[0]['DISPLAY_FIRST_LAST']
+    name = commonplayerinfo.CommonPlayerInfo(data.loc[:, 'PLAYER_ID'][0]).get_data_frames()[0]['DISPLAY_FIRST_LAST']
     data['NAME'] = name
 
 
@@ -141,7 +141,7 @@ def normalize(_df: pd.DataFrame):
 
 
 def main():
-    save_all_players_on_team()
+    save_all_players_on_team('NOP')
     # data = main_player_data()
     # for d in data: make_average(d)
     # ad = make_multi_index('ad', data[0])
