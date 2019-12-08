@@ -1,16 +1,14 @@
-import pandas as pd
+from pathlib import Path
 
-# this glorious api has documentation here https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/examples.md
-from nba_api.stats.static import teams
-from nba_api.stats.static import players
+import pandas as pd
+from nba_api.stats.endpoints import commonplayerinfo
 from nba_api.stats.endpoints import playercareerstats
 from nba_api.stats.endpoints import playergamelog
-from nba_api.stats.endpoints import commonplayerinfo
+from nba_api.stats.static import players
+# this glorious api has documentation here https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/examples.md
+from nba_api.stats.static import teams
 
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-
-from pathlib import Path
+from source.Data.TeamData import add_opponent_data
 
 
 class TooManyPlayers(Exception): pass
@@ -20,6 +18,7 @@ class NoPlayersFound(Exception): pass
 
 
 DATA_FOLDER = Path(".").resolve()
+all_teams = teams.get_teams()
 
 
 def main_player_data() -> pd.DataFrame:
@@ -33,7 +32,6 @@ def make_average(_df: pd.DataFrame) -> None:
     _df['PTS_AVG'] = _df.apply(lambda x: x['PTS'] / x['GP'], axis=1)
     _df['REB_AVG'] = _df.apply(lambda x: x['REB'] / x['GP'], axis=1)
     _df['AST_AVG'] = _df.apply(lambda x: x['AST'] / x['GP'], axis=1)
-    # _df['SEASON_ID'] = _df['SEASON_ID'].map(lambda x: int(x.split('-')[0]))
 
 
 def average_per_min(df: pd.DataFrame) -> None:
@@ -59,25 +57,32 @@ def combine_and_clean(_df1: pd.DataFrame, _df2: pd.DataFrame) -> pd.DataFrame:
     return combo
 
 
-def get_playercareerstats(player_id: str or int) -> pd.DataFrame:
+def get_playercareerstats(player_id=201939) -> pd.DataFrame:
+    assert isinstance(player_id, (int, str))
+    # ! check this workflow for a player that was traded mid season - how're his stats impacted
     return playercareerstats.PlayerCareerStats(player_id=player_id).get_data_frames()[0]
 
 
 def get_all_years_data_for_player(player: pd.DataFrame) -> pd.DataFrame:
-    years = player['SEASON_ID'].to_list()
-    playerid = player['PLAYER_ID'][0]
-    data = playergamelog.PlayerGameLog(player_id=playerid, season=years.pop()).get_data_frames()[0]
-    for year in years:
-        data = pd.concat([data, playergamelog.PlayerGameLog(player_id=playerid, season=year).get_data_frames()[0]],
+    player_id = player['PERSON_ID'][0]
+    data = pd.DataFrame()
+    for year in range(player.FROM_YEAR[0], player.TO_YEAR[0] + 1):
+        year = str(year)
+        season = year + '-' + str(int(year[-2:]) + 1)
+        data = pd.concat([data, playergamelog.PlayerGameLog(player_id=player_id, season=season).get_data_frames()[0]],
                          axis=0).fillna(0)
     data['GAME_DATE'] = pd.to_datetime(data['GAME_DATE'])
+    data['NAME'] = player.DISPLAY_FIRST_LAST[0]
     data.sort_values(by="GAME_DATE", inplace=True)
+    normalize(data)
     return data
 
 
-def create_save_all_years_data_for_player(player_id: int) -> None:
-    player_data = get_playercareerstats(player_id)
+def create_save_all_years_data_for_player(player_id: int or str) -> None:
+    player_data = commonplayerinfo.CommonPlayerInfo(player_id).get_data_frames()[0]
     all_player_data = get_all_years_data_for_player(player_data)
+    all_player_data.set_index('GAME_ID', drop=True, inplace=True)
+    add_opponent_data(all_player_data)
     file_path = DATA_FOLDER / 'DetailedPlayerStats' / (str(player_id) + '_all_years.csv')
     all_player_data.to_csv(file_path)
 
@@ -107,32 +112,56 @@ def current_season_for_all_players_averaged() -> pd.DataFrame:
         career_stats = playercareerstats.PlayerCareerStats(player['id']).get_data_frames()[0]
         year_stats = career_stats.loc[career_stats['SEASON_ID'] == '2019-20']
         stats = pd.concat([stats, year_stats], axis=0, )
-        # curry_season_stats
     file_path = DATA_FOLDER / 'CareerStats/all_players_this_year.csv'
     stats.to_csv(file_path, index=False)
     return stats
 
 
+def add_player_name(data: pd.DataFrame):
+    name = commonplayerinfo.CommonPlayerInfo(data['PLAYER_ID'][0]).get_data_frames()[0]['DISPLAY_FIRST_LAST']
+    data['NAME'] = name
+
+
+def save_all_players_on_team(team_abr='NOP'):
+    assert isinstance(team_abr, str)
+    all_players = pd.read_csv(
+        DATA_FOLDER / 'CareerStats/all_players_this_year.csv')
+
+    normalize(all_players)
+
+    all_players.reset_index(drop=True, inplace=True)
+    team_players = all_players.loc[all_players.TEAM_ABBREVIATION == team_abr]
+    for indx, id in enumerate(team_players.PLAYER_ID):
+        print('working on #', indx)
+        create_save_all_years_data_for_player(id)
+
+
+def normalize(_df: pd.DataFrame):
+    _df.columns = _df.columns.str.upper()
+
+
 def main():
-    data = main_player_data()
-    for d in data: make_average(d)
-    ad = make_multi_index('ad', data[0])
-    sc = make_multi_index('sc', data[1])
-    combined = combine_and_clean(ad, sc)
+    save_all_players_on_team()
+    # data = main_player_data()
+    # for d in data: make_average(d)
+    # ad = make_multi_index('ad', data[0])
+    # sc = make_multi_index('sc', data[1])
+    # combined = combine_and_clean(ad, sc)
 
 
 if __name__ == '__main__':
-    # pass
+    main()
+
     # id = get_playerid_from_name('steph curry')
     # create_save_all_years_data_for_player(id)
     # curry_game_stats = playergamelog.PlayerGameLog(player_id=201939, season='2018').get_data_frames()[0]
     # average_per_min(curry_game_stats)
     # all_stats = current_season_for_all_players_averaged()
-    all_stats = pd.read_csv(DATA_FOLDER / 'CareerStats/all_players_this_year.csv')
-    all_stats['name'] = all_stats.apply(
-        lambda x: commonplayerinfo.CommonPlayerInfo(x['PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST'], axis=1)
-    all_stats.to_csv(DATA_FOLDER / 'CareerStats/all_players_this_year_named.csv')
-    # main()
+    #
+    # all_stats = pd.read_csv(DATA_FOLDER / 'CareerStats/all_players_this_year.csv')
+    # all_stats['name'] = all_stats.apply(
+    #     lambda x: commonplayerinfo.CommonPlayerInfo(x['PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST'], axis=1)
+    # all_stats.to_csv(DATA_FOLDER / 'CareerStats/all_players_this_year_named.csv')
 
     # sc_678.plot(x = 'id', y = ['AST'], kind='scatter', color='red', ax=ax)
     # sc_678.plot(x = 'id', y = ['PTS'], kind='scatter', color='blue', ax=ax, legend=True)

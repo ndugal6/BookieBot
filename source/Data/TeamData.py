@@ -1,16 +1,10 @@
-import pandas as pd
+from pathlib import Path
 
+import pandas as pd
+from nba_api.stats.endpoints import leaguegamefinder
+from nba_api.stats.endpoints import teamgamelog
 # this glorious api has documentation here https://github.com/swar/nba_api/blob/master/docs/nba_api/stats/examples.md
 from nba_api.stats.static import teams
-from nba_api.stats.endpoints import teamgamelog
-from nba_api.stats.endpoints import \
-    teamdashboardbyopponent  # ex: teamdashboardbyopponent.TeamDashboardByOpponent(team_id='1610612740', opponent_team_id='1610612744', date_from_nullable=str(datetime(year=2017, month=1, day=10).date())).get_data_frames()
-
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-from nba_api.stats.endpoints import leaguegamefinder
-
-from pathlib import Path
 
 
 class TooManyTeams(Exception): pass
@@ -76,6 +70,7 @@ def get_all_years_data_for_team(team: object) -> pd.DataFrame:
     df.reset_index(drop=True, inplace=True)
     return df
 
+
 def get_all_years_data_for_team_id(team_id: int or str) -> pd.DataFrame:
     gamefinder = leaguegamefinder.LeagueGameFinder(team_id_nullable=team_id)
     # The first DataFrame of those returned is what we want.
@@ -90,8 +85,8 @@ def add_opponent_data(df: pd.DataFrame):
     df.astype({'OPP_ID': 'int64'})
 
 
-def team_id_from_abbrev(abbrev: str) -> int:
-    matched_team = list(filter(lambda x: x['abbreviation'] == abbrev, all_teams))
+def team_id_from_abbrev(abbrev: str, _all_teams=all_teams) -> int:
+    matched_team = list(filter(lambda x: x['abbreviation'] == abbrev, _all_teams))
     return 0 if len(matched_team) != 1 else matched_team[0]['id']
 
 
@@ -132,6 +127,7 @@ if __name__ == '__main__':
     # add_opponent_data(pelicans_data)
     # pelicans_data.to_csv('/Users/nickdugal/Dev/python3/BookieBot/Data/DetailedTeamStats/Pelicans_all_years_opponent_data.csv', index=False)
 
+
 def scratch_work():
     pels = get_team_meta_data('pelicans')
     gsw = get_team_meta_data('GSW')
@@ -140,7 +136,4 @@ def scratch_work():
     away = matchups.loc[matchups['HOME'] == 0]
     wins = len(matchups.loc[matchups['WL'] == 'W']['WL'])
     losses = len(matchups.loc[matchups['WL'] == 'L']['WL'])
-    win_percent = wins / (wins/losses)
-
-
-
+    win_percent = wins / (wins / losses)

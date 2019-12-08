@@ -95,7 +95,6 @@ def probability_to_moneyline(probability):
     line = rawLine * 100
     return line
 
-
 def probability_to_decimal(probability):
     return Decimal(1 / probability)
 

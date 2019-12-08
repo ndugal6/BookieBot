@@ -1,1 +1,4 @@
 /.venv/
+/.bb_venv/
+/.bb_venv/
+.bb_venv
