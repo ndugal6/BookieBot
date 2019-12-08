@@ -1,6 +1,6 @@
 import decimal as decimal_
 import math
-
+import numpy as np
 
 # For clarification: probability is bounded by 0 & 1
 #                     percentage is probability * 100; bound by 0 & 100...
@@ -143,6 +143,15 @@ def linesToprobs(lines):
     for line in lines:
         probs.append((line, line_to_probability(line)))
     return probs
+
+def mean_normalize(values: np.array):
+    mean = values.mean()
+    std = values.std()
+    range = values.max() - values.min()
+    normie_value = lambda x: (x - mean) / std
+    # normie_value_variant_2 = lambda x: (x - mean) / range this version will ALWAYS be with -1 & 1, kinda like the above more though.. idk tbd
+    normalized = np.array([normie_value(value) for value in values])
+    return normalized
 
 
 if __name__ == '__main__':

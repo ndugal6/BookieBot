@@ -64,15 +64,15 @@ def get_playercareerstats(player_id=201939) -> pd.DataFrame:
 
 
 def get_all_years_data_for_player(player: pd.DataFrame) -> pd.DataFrame:
-    player_id = player.loc[:,'PERSON_ID'][0]
+    player_id = player.at[player.index[0],'PERSON_ID']
     data = pd.DataFrame()
     for year in range(player.FROM_YEAR[0], player.TO_YEAR[0] + 1):
         year = str(year)
         season = year + '-' + str(int(year[-2:]) + 1)
         data = pd.concat([data, playergamelog.PlayerGameLog(player_id=player_id, season=season).get_data_frames()[0]],
                          axis=0).fillna(0)
-    data['GAME_DATE'] = pd.to_datetime(data.loc[:,'GAME_DATE'])
-    data['NAME'] = player.DISPLAY_FIRST_LAST[0]
+    data.loc['GAME_DATE'] = pd.to_datetime(data.loc[:,'GAME_DATE'])
+    data.loc[:,'NAME'] = player.DISPLAY_FIRST_LAST[0]
     data.sort_values(by="GAME_DATE", inplace=True)
     normalize(data)
     return data
@@ -118,8 +118,8 @@ def current_season_for_all_players_averaged() -> pd.DataFrame:
 
 
 def add_player_name(data: pd.DataFrame):
-    name = commonplayerinfo.CommonPlayerInfo(data.loc[:, 'PLAYER_ID'][0]).get_data_frames()[0]['DISPLAY_FIRST_LAST']
-    data['NAME'] = name
+    name = commonplayerinfo.CommonPlayerInfo(data.at[data.index[0], 'PLAYER_ID']).get_data_frames()[0]['DISPLAY_FIRST_LAST']
+    data.loc[:,'NAME'] = name
 
 
 def save_all_players_on_team(team_abr='NOP'):
