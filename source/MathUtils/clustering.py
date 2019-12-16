@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-
+import matplotlib.pyplot as plt
 
 def main():
     pass
@@ -68,18 +68,12 @@ def stringify_coords(a):
     return seperator.join(list(a_corrected))
 
 
-def set_membership_column():
-    pass
-
-
-if __name__ == '__main__':
-    # main()
-    k = 2
+def k_mean_clustering():
+    k = 3
     threshold = 0.5
     convergance_limit = 10
     coords = np.array([(1, 1), (2, 2), (10, 15), (8, -12), (14, 100)])
     df, klocs = cluster(k, coords)
-    index = df.index
 
     count = 1
     while True:
@@ -101,6 +95,55 @@ if __name__ == '__main__':
             print("unable to converge")
             break
         df, klocs = cluster(k, coords, k_locs=klocs, df=df)
+
+
+if __name__ == '__main__':
+    # main()
+    k = 3
+    threshold = 0.05
+    convergance_limit = 10
+    coords = np.array([(1, 1), (2, 2), (10, 15), (8, -12), (-5,-10), (-15,15), (10,-15),(-10,15), (-1,-1), (20,20), (-8,-12)])
+    df, klocs = cluster(k, coords)
+    index = df.index
+
+    count = 1
+    while True:
+        cluster_too_far = False
+        for cluster_id, cluster_position in klocs.items():
+            new_x = df[df.MEMBERSHIP == cluster_id]['X'].mean()
+            new_y = df[df.MEMBERSHIP == cluster_id]['Y'].mean()
+            new_coords = np.array((new_x, new_y))
+            if not cluster_too_far:
+                distance = np.linalg.norm(new_coords - cluster_position)
+                cluster_too_far = distance > threshold
+            klocs[cluster_id] = new_coords
+
+        df, klocs = cluster(k, coords, k_locs=klocs, df=df)
+        if not cluster_too_far:
+            print('converged by interation', count)
+            break
+        count += 1
+        if count > convergance_limit:
+            print("unable to converge")
+            break
+
+
+    plt.figure()
+
+    group_A = df[df.MEMBERSHIP == 'A']
+    group_B = df[df.MEMBERSHIP == 'B']
+    group_C = df[df.MEMBERSHIP == 'C']
+    # plt.xm
+    plt.scatter(group_A['X'], group_A['Y'], s=10, marker='.', c='r')
+    plt.scatter(group_B['X'], group_B['Y'], s=10, marker='.', c='b')
+
+    plt.scatter(klocs['A'][0], klocs['A'][1], s=20, marker='x', c='r')
+    plt.scatter(klocs['B'][0], klocs['B'][0], s=20, marker='x', c='b')
+
+    plt.scatter(group_C['X'], group_C['Y'], s=10, marker='o', c='k')
+    plt.scatter(klocs['C'][0], klocs['C'][0], s=20, marker='x', c='k')
+    print(klocs)
+    plt.show()
 
 # where c is a numpy array of coorsd & b is a numpy coord of interest
 # C = np.array([(1,1),(4,4)])
